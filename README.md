@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Image Tools
 
-## Getting Started
+一套强大的在线图像处理工具集合，提供多种图像处理功能。
 
-First, run the development server:
+## 功能特性
+
+- 图片压缩 - 高效压缩图片，保持最佳质量
+  - 支持的格式：PNG, JPEG, WebP
+  - 最大文件大小：10MB
+- Logo生成 - 快速生成专业的Logo设计（开发中）
+- AI 生图 - 使用AI技术生成独特的图像（开发中）
+
+## 技术栈
+
+- 框架：Next.js 13+ (App Router)
+- 语言：TypeScript
+- 样式：Tailwind CSS
+- 包管理：pnpm
+
+## 开发
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# 安装依赖
+pnpm install
+
+# 启动开发服务器
 pnpm dev
-# or
-bun dev
+
+# 构建生产版本
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 项目结构
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+src/
+  ├── app/                 # App Router 路由
+  │   ├── page.tsx        # 首页
+  │   ├── compress/       # 图片压缩功能
+  │   ├── logo/          # Logo生成功能（计划中）
+  │   └── ai-image/      # AI生图功能（计划中）
+  ├── components/         # 共享组件
+  └── styles/            # 全局样式
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 开发进度
 
-## Learn More
+- [x] 项目初始化
+- [ ] 图片压缩功能
+- [ ] Logo生成功能
+- [ ] AI生图功能
 
-To learn more about Next.js, take a look at the following resources:
+## 部署
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+本项目可以轻松部署到 [Vercel 平台](https://vercel.com)。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 了解更多
 
-## Deploy on Vercel
+- [Next.js 文档](https://nextjs.org/docs) - 了解 Next.js 特性和 API
+- [Learn Next.js](https://nextjs.org/learn) - 交互式 Next.js 教程
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 环境要求
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Node.js 16.x 或更高版本
+- pnpm 8.x 或更高版本
+
+## 贡献指南
+
+欢迎提交 Pull Request 或 Issue！
+
+1. Fork 本仓库
+2. 创建新分支：`git checkout -b feature/your-feature`
+3. 提交更改：`git commit -m 'Add some feature'`
+4. 推送分支：`git push origin feature/your-feature`
+5. 提交 Pull Request
+
+## 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
