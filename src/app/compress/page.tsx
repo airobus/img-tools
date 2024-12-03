@@ -38,14 +38,6 @@ const defaultCompressionOptions = {
   }
 }
 
-// 添加默认视频缩略图 URL
-const DEFAULT_VIDEO_THUMBNAIL = `data:image/svg+xml,${encodeURIComponent(`
-  <svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
-    <rect width="100%" height="100%" fill="#f1f5f9"/>
-    <path d="M120 90v20l20-10-20-10zM150 100c0 27.614-22.386 50-50 50s-50-22.386-50-50 22.386-50 50-50 50 22.386 50 50z" fill="#94a3b8"/>
-  </svg>
-`)}`
-
 export default function CompressPage() {
   const [files, setFiles] = useState<FileItem[]>([])
   const [compressionOptions, setCompressionOptions] = useState({
@@ -65,18 +57,9 @@ export default function CompressPage() {
   }
 
   const createFileItem = async (file: File): Promise<FileItem> => {
-    let previewFile = file
-    let fileType = getFileType(file)
+    const previewFile = file
+    const fileType = getFileType(file)
     
-    // 如果是 HEIC 文件，先转换为 JPEG 用于预览
-    if (fileType === 'heic') {
-      try {
-        previewFile = await convertHeicToJpeg(file)
-      } catch (error) {
-        console.error('HEIC preview conversion failed:', error)
-      }
-    }
-
     const preview = await new Promise<string>((resolve) => {
       const reader = new FileReader()
       reader.onloadend = () => resolve(reader.result as string)
@@ -162,7 +145,7 @@ export default function CompressPage() {
       ))
 
       let processedFile: File
-      let shouldCompress = true
+      const shouldCompress = true
 
       if (fileItem.type === 'heic') {
         try {

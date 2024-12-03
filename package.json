@@ -9,8 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ffmpeg/ffmpeg": "^0.12.10",
-    "@ffmpeg/util": "^0.12.1",
     "browser-image-compression": "^2.0.2",
     "file-saver": "^2.0.5",
     "heic-convert": "^2.1.0",
