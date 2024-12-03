@@ -5,11 +5,17 @@ import Image from 'next/image'
 import imageCompression from 'browser-image-compression'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
+import { Buffer } from 'buffer'
+
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer
+}
 
 interface FileItem {
   id: string
   file: File
   preview: string
+  type: 'image' | 'heic'
   compressedFile?: File
   compressedPreview?: string
   status: 'waiting' | 'processing' | 'done' | 'error'
@@ -32,6 +38,14 @@ const defaultCompressionOptions = {
   }
 }
 
+// 添加默认视频缩略图 URL
+const DEFAULT_VIDEO_THUMBNAIL = `data:image/svg+xml,${encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
+    <rect width="100%" height="100%" fill="#f1f5f9"/>
+    <path d="M120 90v20l20-10-20-10zM150 100c0 27.614-22.386 50-50 50s-50-22.386-50-50 22.386-50 50-50 50 22.386 50 50z" fill="#94a3b8"/>
+  </svg>
+`)}`
+
 export default function CompressPage() {
   const [files, setFiles] = useState<FileItem[]>([])
   const [compressionOptions, setCompressionOptions] = useState({
@@ -51,16 +65,29 @@ export default function CompressPage() {
   }
 
   const createFileItem = async (file: File): Promise<FileItem> => {
+    let previewFile = file
+    let fileType = getFileType(file)
+    
+    // 如果是 HEIC 文件，先转换为 JPEG 用于预览
+    if (fileType === 'heic') {
+      try {
+        previewFile = await convertHeicToJpeg(file)
+      } catch (error) {
+        console.error('HEIC preview conversion failed:', error)
+      }
+    }
+
     const preview = await new Promise<string>((resolve) => {
       const reader = new FileReader()
       reader.onloadend = () => resolve(reader.result as string)
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(previewFile)
     })
 
     return {
       id: Math.random().toString(36).slice(2),
       file,
       preview,
+      type: fileType,
       status: 'waiting',
       progress: 0
     }
@@ -110,92 +137,111 @@ export default function CompressPage() {
     handleFiles(newFiles)
   }
 
+  const getFileType = (file: File): 'image' | 'heic' => {
+    if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) return 'heic'
+    return 'image'
+  }
+
+  const convertHeicToJpeg = async (file: File): Promise<File> => {
+    const heicConvert = (await import('heic-convert')).default
+    const arrayBuffer = await file.arrayBuffer()
+    const jpegBuffer = await heicConvert({
+      buffer: Buffer.from(arrayBuffer),
+      format: 'JPEG',
+      quality: 0.9
+    })
+    return new File([jpegBuffer], file.name.replace(/\.heic$/i, '.jpg'), {
+      type: 'image/jpeg'
+    })
+  }
+
   const compressFile = async (fileItem: FileItem) => {
     try {
       setFiles(prev => prev.map(f => 
         f.id === fileItem.id ? { ...f, status: 'processing' } : f
       ))
 
-      // 提前检查文件是否需要压缩
-      const skipCompression = await shouldSkipCompression(fileItem.file)
-      if (skipCompression) {
-        setFiles(prev => prev.map(f => 
-          f.id === fileItem.id ? {
-            ...f,
-            status: 'done',
-            compressedFile: fileItem.file,
-            compressedPreview: fileItem.preview,
-            compressionRatio: 0,
-            error: '当前图片已经足够小，无需压缩',
-            progress: 100
-          } : f
-        ))
-        return
+      let processedFile: File
+      let shouldCompress = true
+
+      if (fileItem.type === 'heic') {
+        try {
+          processedFile = await convertHeicToJpeg(fileItem.file)
+        } catch (error) {
+          throw new Error('HEIC 转换失败: ' + (error as Error).message)
+        }
+      } else {
+        processedFile = fileItem.file
       }
 
-      const options = {
-        ...compressionOptions,
-        useWebWorker: true,
-        fileType: fileItem.file.type,
-        onProgress: (p: number) => {
+      if (shouldCompress) {
+        const skipCompression = await shouldSkipCompression(processedFile)
+        if (skipCompression) {
           setFiles(prev => prev.map(f => 
-            f.id === fileItem.id ? { ...f, progress: Math.min(Math.round(p * 100), 100) } : f
+            f.id === fileItem.id ? {
+              ...f,
+              status: 'done',
+              compressedFile: processedFile,
+              compressedPreview: fileItem.preview,
+              compressionRatio: 0,
+              error: '已经是最佳压缩状态，不可再压缩',
+              progress: 100
+            } : f
           ))
-        },
+          return
+        }
+
+        const options = {
+          ...compressionOptions,
+          useWebWorker: true,
+          fileType: processedFile.type,
+          onProgress: (p: number) => {
+            setFiles(prev => prev.map(f => 
+              f.id === fileItem.id ? { ...f, progress: Math.min(Math.round(p * 100), 100) } : f
+            ))
+          },
+        }
+
+        processedFile = await imageCompression(processedFile, options)
       }
 
-      const compressedFile = await imageCompression(fileItem.file, options)
-
-      // 如果压缩后反而更大，使用原文件
-      if (compressedFile.size >= fileItem.file.size) {
-        setFiles(prev => prev.map(f => 
-          f.id === fileItem.id ? {
-            ...f,
-            status: 'done',
-            compressedFile: fileItem.file,
-            compressedPreview: fileItem.preview,
-            compressionRatio: 0,
-            error: '已经是最佳压缩状态，不可再压缩',
-            progress: 100
-          } : f
-        ))
-        return
-      }
-
-      const compressedPreview = await new Promise<string>((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.readAsDataURL(compressedFile)
-      })
-
-      const ratio = ((fileItem.file.size - compressedFile.size) / fileItem.file.size * 100).toFixed(1)
+      const preview = await generateImagePreview(processedFile)
+      const ratio = ((fileItem.file.size - processedFile.size) / fileItem.file.size * 100).toFixed(1)
 
       setFiles(prev => prev.map(f => 
         f.id === fileItem.id ? {
           ...f,
           status: 'done',
-          compressedFile,
-          compressedPreview,
+          compressedFile: processedFile,
+          compressedPreview: preview,
           compressionRatio: Number(ratio),
           progress: 100
         } : f
       ))
     } catch (error) {
+      console.error('压缩失败:', error)
       setFiles(prev => prev.map(f => 
         f.id === fileItem.id ? {
           ...f,
           status: 'error',
-          error: '压缩失败，请重试',
+          error: error instanceof Error ? error.message : '处理失败，请重试',
           progress: 0
         } : f
       ))
     }
   }
 
+  const generateImagePreview = async (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.readAsDataURL(file)
+    })
+  }
+
   const handleCompressAll = async () => {
     const waitingFiles = files.filter(f => f.status === 'waiting')
     
-    // 分批处理文件
     for (let i = 0; i < waitingFiles.length; i += CONCURRENT_LIMIT) {
       const batch = waitingFiles.slice(i, i + CONCURRENT_LIMIT)
       await Promise.all(batch.map(file => compressFile(file)))
@@ -254,32 +300,25 @@ export default function CompressPage() {
     }
   }
 
-  // 添加文件预检查函数
   const shouldSkipCompression = async (file: File): Promise<boolean> => {
-    // 1. 检查文件大小（比如小于50KB的文件直接跳过）
-    const MIN_SIZE = 50 * 1024 // 50KB
+    const MIN_SIZE = 50 * 1024
     if (file.size < MIN_SIZE) {
       return true
     }
 
-    // 2. 检查文件类型
     const isOptimizedFormat = file.type === 'image/webp' || file.type === 'image/avif'
     if (isOptimizedFormat) {
-      // 对于已经是优化格式的图片，可以设置更大的阈值
-      const OPTIMIZED_MIN_SIZE = 100 * 1024 // 100KB
+      const OPTIMIZED_MIN_SIZE = 100 * 1024
       return file.size < OPTIMIZED_MIN_SIZE
     }
 
-    // 3. 对于较大文件，可以快速检查是否已经被压缩过
-    if (file.size > 1024 * 1024) { // 1MB以上的文件
+    if (file.size > 1024 * 1024) {
       try {
-        // 创建一个临时的 Image 对象来获取图片尺寸
         const dimensions = await getImageDimensions(file)
         const pixelCount = dimensions.width * dimensions.height
         const bitsPerPixel = (file.size * 8) / pixelCount
 
-        // 如果每像素位数已经很低，说明图片已经被很好地压缩过
-        if (bitsPerPixel < 2) { // 可以根据需要调整这个阈值
+        if (bitsPerPixel < 2) {
           return true
         }
       } catch (error) {
@@ -291,10 +330,8 @@ export default function CompressPage() {
     return false
   }
 
-  // 修改获取图片尺寸的辅助函数
   const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
     return new Promise((resolve, reject) => {
-      // 使用 window.Image 来明确指定浏览器环境
       const img = new window.Image()
       img.onload = () => {
         resolve({
@@ -305,7 +342,6 @@ export default function CompressPage() {
       img.onerror = reject
       img.src = URL.createObjectURL(file)
 
-      // 清理 URL 对象
       return () => {
         URL.revokeObjectURL(img.src)
       }
@@ -315,7 +351,6 @@ export default function CompressPage() {
   return (
     <div className="min-h-screen p-12">
       <div className="max-w-6xl mx-auto space-y-12">
-        {/* 标题区域 */}
         <div className="space-y-4">
           <h1 className="text-4xl font-medium tracking-tight">批量图片压缩</h1>
           <p className="text-[var(--text-secondary)] text-xl">
@@ -323,12 +358,9 @@ export default function CompressPage() {
           </p>
         </div>
 
-        {/* 主要内容区 */}
         <div className="bg-white/80 rounded-3xl p-10 glass-effect">
-          {/* 压缩选项 */}
           <div className="mb-8">
             <div className="space-y-4">
-              {/* 预设按钮 */}
               <div className="flex gap-4 mb-6">
                 <button
                   onClick={() => setCompressionOptions(prev => ({ ...prev, quality: defaultCompressionOptions.small.quality }))}
@@ -350,7 +382,6 @@ export default function CompressPage() {
                 </button>
               </div>
 
-              {/* 质量滑块 */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-[var(--text-secondary)]">
@@ -380,7 +411,6 @@ export default function CompressPage() {
             </div>
           </div>
 
-          {/* 上传区域 */}
           <div
             className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 
               ${isDragging ? 'border-[var(--accent-color)] bg-blue-50/50' : 'border-[var(--border)]'}`}
@@ -390,7 +420,7 @@ export default function CompressPage() {
           >
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,.heic"
               onChange={handleFileSelect}
               className="hidden"
               id="fileInput"
@@ -411,16 +441,14 @@ export default function CompressPage() {
                   点击或拖放图片至此处
                 </p>
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                  支持 JPG、PNG、WebP 格式，最多 {MAX_FILES} 个文件
+                  支持 JPG、PNG、WebP、HEIC 格式，最多 {MAX_FILES} 个文件
                 </p>
               </div>
             </label>
           </div>
 
-          {/* 文件列表 */}
           {files.length > 0 && (
             <div className="mt-12 space-y-8">
-              {/* 批量操作按钮 */}
               <div className="flex gap-4">
                 <button
                   onClick={handleCompressAll}
@@ -456,7 +484,6 @@ export default function CompressPage() {
                 </button>
               </div>
 
-              {/* 文件卡片列表 */}
               <div className="grid grid-cols-1 gap-6">
                 {files.map(fileItem => (
                   <div 
@@ -464,7 +491,6 @@ export default function CompressPage() {
                     className="modern-card p-6"
                   >
                     <div className="flex items-center gap-6">
-                      {/* 预览图 */}
                       <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0">
                         <Image
                           src={fileItem.compressedPreview || fileItem.preview}
@@ -475,7 +501,6 @@ export default function CompressPage() {
                         />
                       </div>
 
-                      {/* 文件信息 */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div>
@@ -506,7 +531,6 @@ export default function CompressPage() {
                           </button>
                         </div>
 
-                        {/* 状态和进度 */}
                         <div className="mt-4">
                           {fileItem.status === 'processing' && (
                             <div className="space-y-2">

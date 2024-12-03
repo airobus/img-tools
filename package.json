@@ -1,5 +1,5 @@
 {
-  "name": "img-tools",
+  "name": "image-cube",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,8 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1",
     "browser-image-compression": "^2.0.2",
     "file-saver": "^2.0.5",
+    "heic-convert": "^2.1.0",
     "jszip": "^3.10.1",
     "next": "15.0.3",
     "react": "19.0.0-rc-66855b96-20241106",
@@ -18,7 +21,7 @@
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
-    "@types/node": "^20",
+    "@types/node": "^20.17.9",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",

@@ -7,7 +7,7 @@ export default function Home() {
         {/* 标题区域 */}
         <div className="text-center space-y-6">
           <h1 className="text-5xl font-bold gradient-text">
-            强大的图像工具集
+            图片魔方
           </h1>
           <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
             简单、高效、专业的在线图像处理工具，让创作更轻松

@@ -6,7 +6,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Image Tools - 在线图像工具集',
+  title: '图片魔方 - 在线图像工具集',
   description: '提供图片压缩、Logo生成、AI生图等多种图像处理工具',
 }
 
@@ -48,7 +48,7 @@ export default function RootLayout({
                 href="/" 
                 className="text-xl font-semibold gradient-text hover:opacity-80 transition-opacity"
               >
-                Image Tools
+                图片魔方
               </Link>
             </div>
             
@@ -98,7 +98,7 @@ export default function RootLayout({
 
             {/* 底部版权信息 */}
             <div className="absolute bottom-0 left-0 right-0 p-4 text-center text-sm text-[var(--text-secondary)] border-t border-[var(--border)]">
-              © 2024 Image Tools
+              © 2024 图片魔方
             </div>
           </aside>
 
