@@ -16,21 +16,27 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const menuItems = [
-    { 
-      name: '图片压缩', 
-      href: '/compress', 
+    {
+      name: '图片压缩',
+      href: '/compress',
       enabled: true,
       description: '高效压缩图片，保持最佳质量'
+    }, 
+    {
+      name: 'SVG编辑',
+      href: '/svg',
+      enabled: true,
+      description: '在线编辑SVG代码'
     },
-    { 
-      name: 'Logo生成', 
-      href: '/logo', 
+    {
+      name: 'Logo生成',
+      href: '/logo',
       enabled: false,
       description: '快速生成专业的Logo设计'
     },
-    { 
-      name: 'AI生图', 
-      href: '/ai-image', 
+    {
+      name: 'AI生图',
+      href: '/ai-image',
       enabled: false,
       description: '使用AI技术生成独特的图像'
     },
@@ -44,14 +50,14 @@ export default function RootLayout({
           <aside className="fixed left-0 top-0 h-full w-64 glass-effect border-r border-[var(--border)] z-10">
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-[var(--border)]">
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="text-xl font-semibold gradient-text hover:opacity-80 transition-opacity"
               >
                 图片魔方
               </Link>
             </div>
-            
+
             {/* 导航菜单 */}
             <nav className="p-4">
               <div className="space-y-2">
