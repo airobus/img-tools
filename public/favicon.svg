@@ -1,0 +1,13 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 立方体主体 -->
+  <path d="M16 2L4 9V23L16 30L28 23V9L16 2Z" fill="#4285F4"/>
+  
+  <!-- 立方体右面 -->
+  <path d="M16 2L28 9L16 16L4 9L16 2Z" fill="#34A853"/>
+  
+  <!-- 图片元素 -->
+  <path d="M10 8H22V14H10V8Z" fill="white"/>
+  <circle cx="13" cy="11" r="1" fill="#4285F4"/>
+  <path d="M11 13L13 11L15 13H11Z" fill="#4285F4"/>
+  <path d="M15 10L17 12L19 10L21 12H15" fill="#34A853"/>
+</svg> 

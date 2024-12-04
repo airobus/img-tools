@@ -43,7 +43,10 @@ export default function RootLayout({
   ]
 
   return (
-    <html lang="zh" className="h-full">
+    <html lang="zh" className="h-full"> 
+      <head>
+        <link rel="icon" type="public/svg+xml" href="/favicon.svg" />
+      </head>
       <body className={`${inter.className} h-full`}>
         <div className="flex h-full">
           {/* 侧边栏导航 */}
