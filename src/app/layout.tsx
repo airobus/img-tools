@@ -29,6 +29,12 @@ export default function RootLayout({
       description: '在线编辑SVG代码'
     },
     {
+      name: '图片尺寸',
+      href: '/resize',
+      enabled: true,
+      description: '调整图片尺寸和比例'
+    },
+    {
       name: 'Logo生成',
       href: '/logo',
       enabled: false,
