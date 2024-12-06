@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# 禁止访问API路由
+Disallow: /api/
+
+# 站点地图
+Sitemap: https://img-tools.923828.xyz/sitemap.xml 

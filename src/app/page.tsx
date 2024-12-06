@@ -67,7 +67,7 @@ export default function Home() {
             </div>
 
             {/* 特性介绍 */}
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-4 gap-6">
               {[
                 {
                   title: '简单易用',
@@ -83,9 +83,19 @@ export default function Home() {
                   title: '安全可靠',
                   description: '本地处理，保护您的图片安全',
                   icon: '🔒'
+                },
+                {
+                  title: '永久免费',
+                  description: '所有功能完全免费，无需注册登录',
+                  icon: '🎁',
+                  highlight: true // 添加高亮标记
                 }
               ].map((feature, index) => (
-                <div key={index} className="modern-card p-6 text-center space-y-4">
+                <div 
+                  key={index} 
+                  className={`modern-card p-6 text-center space-y-4 transition-all hover:-translate-y-1 
+                    ${feature.highlight ? 'ring-2 ring-[var(--primary)] bg-gradient-to-br from-blue-50 to-white' : ''}`}
+                >
                   <div className="text-3xl">{feature.icon}</div>
                   <h3 className="text-lg font-semibold">{feature.title}</h3>
                   <p className="text-[var(--text-secondary)]">{feature.description}</p>

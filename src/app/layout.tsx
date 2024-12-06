@@ -6,8 +6,29 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: '图片魔方 - 在线图像工具集',
-  description: '提供图片压缩、Logo生成、AI生图等多种图像处理工具',
+  metadataBase: new URL('https://img-tools.923828.xyz'),
+  title: {
+    template: '%s - 图片魔方',
+    default: '图片魔方 - 专业的在线图像处理工具集'
+  },
+  description: '免费在线图片处理工具，支持图片压缩、SVG编辑、尺寸调整等功能。本地处理保护隐私，无需上传服务器。',
+  keywords: '图片压缩,图片处理,SVG编辑器,图片尺寸调整,在线工具,图片优化,批量压缩',
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',
+    siteName: '图片魔方',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+  alternates: {
+    canonical: 'https://img-tools.923828.xyz'
+  }
 }
 
 export default function RootLayout({
