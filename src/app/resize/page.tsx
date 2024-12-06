@@ -10,6 +10,7 @@ interface ImageFile {
   preview: string
   width: number
   height: number
+  rotation: number
   resizedFile?: File
   resizedPreview?: string
 }
@@ -46,7 +47,8 @@ export default function ResizePage() {
         file,
         preview,
         width: dimensions.width,
-        height: dimensions.height
+        height: dimensions.height,
+        rotation: 0
       })
 
       setNewWidth(dimensions.width)
@@ -73,7 +75,7 @@ export default function ResizePage() {
   }
 
   const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const width = Number(e.target.value)
+    const width = Number(e.target.value.replace(/^0+/, '')) || 0
     setNewWidth(width)
     if (keepAspectRatio && image) {
       const ratio = image.height / image.width
@@ -82,12 +84,22 @@ export default function ResizePage() {
   }
 
   const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const height = Number(e.target.value)
+    const height = Number(e.target.value.replace(/^0+/, '')) || 0
     setNewHeight(height)
     if (keepAspectRatio && image) {
       const ratio = image.width / image.height
       setNewWidth(Math.round(height * ratio))
     }
+  }
+
+  const handleRotate = (direction: 'left' | 'right') => {
+    if (!image) return
+    
+    const newRotation = image.rotation + (direction === 'left' ? -90 : 90)
+    setImage(prev => prev ? {
+      ...prev,
+      rotation: newRotation
+    } : null)
   }
 
   const handleResize = async () => {
@@ -108,8 +120,25 @@ export default function ResizePage() {
 
       await new Promise<void>((resolve) => {
         img.onload = () => {
-          // 绘制调整大小后的图片
-          ctx.drawImage(img, 0, 0, newWidth, newHeight)
+          // 处理旋转
+          ctx.save()
+          ctx.translate(canvas.width / 2, canvas.height / 2)
+          ctx.rotate((image.rotation * Math.PI) / 180)
+          
+          // 根据旋转角度调整绘制位置
+          const isVertical = Math.abs(image.rotation % 180) === 90
+          const drawWidth = isVertical ? newHeight : newWidth
+          const drawHeight = isVertical ? newWidth : newHeight
+          
+          ctx.drawImage(
+            img,
+            -drawWidth / 2,
+            -drawHeight / 2,
+            drawWidth,
+            drawHeight
+          )
+          
+          ctx.restore()
           resolve()
         }
       })
@@ -175,8 +204,14 @@ export default function ResizePage() {
 
   const handleResetDimensions = () => {
     if (image) {
-      setNewWidth(image.width)
-      setNewHeight(image.height)
+      const isVertical = Math.abs(image.rotation % 180) === 90
+      if (isVertical) {
+        setNewWidth(image.height)
+        setNewHeight(image.width)
+      } else {
+        setNewWidth(image.width)
+        setNewHeight(image.height)
+      }
     }
   }
 
@@ -245,7 +280,7 @@ export default function ResizePage() {
                           </label>
                           <input
                             type="number"
-                            value={newWidth}
+                            value={String(newWidth).replace(/^0+/, '') || '0'}
                             onChange={handleWidthChange}
                             min="1"
                             className="w-full px-3 py-2 rounded-lg border border-[var(--border)] focus:ring-2 focus:ring-blue-100 outline-none"
@@ -257,7 +292,7 @@ export default function ResizePage() {
                           </label>
                           <input
                             type="number"
-                            value={newHeight}
+                            value={String(newHeight).replace(/^0+/, '') || '0'}
                             onChange={handleHeightChange}
                             min="1"
                             className="w-full px-3 py-2 rounded-lg border border-[var(--border)] focus:ring-2 focus:ring-blue-100 outline-none"
@@ -283,6 +318,24 @@ export default function ResizePage() {
                     </div>
 
                     <div className="flex gap-4">
+                      <button
+                        onClick={() => handleRotate('left')}
+                        className="btn-secondary"
+                        title="向左旋转90度"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleRotate('right')}
+                        className="btn-secondary"
+                        title="向右旋转90度"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </button>
                       <button
                         onClick={handleResize}
                         className="btn-primary"
@@ -333,7 +386,8 @@ export default function ResizePage() {
                       src={image.resizedPreview || image.preview}
                       alt="预览图"
                       fill
-                      className="object-contain"
+                      className="object-contain transition-transform duration-300"
+                      style={{ transform: `rotate(${image.rotation}deg)` }}
                       unoptimized
                     />
                   </div>
