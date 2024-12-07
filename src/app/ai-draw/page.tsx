@@ -179,7 +179,7 @@ export default function AiDrawPage() {
             })
 
             if (!response.ok) {
-                console.error('优化提示词失败:', await response.text())
+                console.error('优��提示词失败:', await response.text())
                 return rawPrompt
             }
 
@@ -194,44 +194,31 @@ export default function AiDrawPage() {
     // 生成图片
     const generateImage = async () => {
         if (!prompt) return;
-        
         let docRef;
         
         try {
             setIsGenerating(true)
-            setTotalProgress(0)  // 重置进度
-            
-            // 创建进度更新定时器
-            const totalProgressInterval = setInterval(() => {
-                setTotalProgress(prev => {
-                    if (prev >= 90) {
-                        clearInterval(totalProgressInterval)
-                        return prev
-                    }
-                    return prev + 1
-                })
-            }, 100)
+            setTotalProgress(0)
 
             // 重置步骤和进度
             setGenerationSteps([
-                { name: '准备创作', completed: true, progress: 100 },
+                { name: '准备创作', completed: false, progress: 0 },
                 { name: '优化提示词', completed: false, progress: 0 },
                 { name: '生成图片', completed: false, progress: 0 },
                 { name: '完成', completed: false, progress: 0 }
             ])
 
-            docRef = await addDoc(collection(db, 'imageHistory'), {
-                originalPrompt: prompt,
-                negativePrompt: negativePrompt,
-                createdAt: new Date(),
-                status: 'generating'
-            });
+            // 准备创作阶段
+            setGenerationSteps(prev => prev.map((step, idx) => 
+                idx === 0 ? { ...step, completed: true, progress: 100 } : step
+            ))
+            setTotalProgress(25)
 
             // 优化提示词阶段
             const progressInterval = setInterval(() => {
                 setGenerationSteps(prev => prev.map((step, idx) => {
                     if (idx === 1 && !step.completed) {
-                        return { ...step, progress: Math.min(step.progress + 5, 90) }
+                        return { ...step, progress: Math.min(step.progress + 10, 90) }
                     }
                     return step
                 }))
@@ -240,20 +227,28 @@ export default function AiDrawPage() {
             const enhancedPrompt = await enhancePrompt(prompt)
             clearInterval(progressInterval)
             
-            // 完成优化提示词
             setGenerationSteps(prev => prev.map((step, idx) => 
                 idx === 1 ? { ...step, completed: true, progress: 100 } : step
             ))
+            setTotalProgress(50)
 
             // 生成图片阶段
             const imageInterval = setInterval(() => {
                 setGenerationSteps(prev => prev.map((step, idx) => {
                     if (idx === 2 && !step.completed) {
-                        return { ...step, progress: Math.min(step.progress + 2, 90) }
+                        return { ...step, progress: Math.min(step.progress + 5, 90) }
                     }
                     return step
                 }))
+                setTotalProgress(prev => Math.min(prev + 1, 90))
             }, 100)
+
+            docRef = await addDoc(collection(db, 'imageHistory'), {
+                originalPrompt: prompt,
+                negativePrompt: negativePrompt,
+                createdAt: new Date(),
+                status: 'generating'
+            });
 
             const response = await fetch('/api/generate-image', {
                 method: 'POST',
@@ -274,6 +269,7 @@ export default function AiDrawPage() {
                 completed: true, 
                 progress: 100 
             })))
+            setTotalProgress(100)
 
             await updateDoc(doc(db, 'imageHistory', docRef.id), {
                 imageUrl: data.images[0].url,
@@ -283,9 +279,6 @@ export default function AiDrawPage() {
                 negativePrompt: negativePrompt,
                 createdAt: new Date().toISOString()
             });
-
-            clearInterval(totalProgressInterval)
-            setTotalProgress(100)  // 完成时设置为 100%
 
         } catch (error: unknown) {
             console.error('生成失败:', error);
