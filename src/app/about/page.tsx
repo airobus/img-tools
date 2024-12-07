@@ -56,19 +56,27 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-500">✓</span>
-                  HEIC 格式自动转换为 JPEG
+                  AI 绘画，支持多种尺寸和风格
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-500">✓</span>
-                  压缩质量可调节，满足不同需求
+                  提示词智能优化，提升生成效果
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-500">✓</span>
-                  实时压缩进度显示
+                  SVG 在线编辑和预览功能
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-500">✓</span>
-                  支持批量打包下载
+                  图片尺寸调整和旋转功能
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500">✓</span>
+                  实时处理进度显示
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500">✓</span>
+                  支持批量处理和打包下载
                 </li>
               </ul>
             </section>
@@ -83,15 +91,15 @@ export default function AboutPage() {
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-medium text-[var(--text-primary)]">AI 图像生成</h3>
+                  <h3 className="text-lg font-medium text-[var(--text-primary)]">图片编辑增强</h3>
                   <p className="leading-relaxed">
-                    计划接入先进的 AI 模型，通过文本描述生成独特的图像。支持多种艺术风格，满足创意设计需求。
+                    计划添加更多图片编辑功能，包括背景移除、滤镜效果、图片拼接等。让图片处理更加专业和便捷。
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-medium text-[var(--text-primary)]">更多功能</h3>
+                  <h3 className="text-lg font-medium text-[var(--text-primary)]">AI 功能扩展</h3>
                   <p className="leading-relaxed">
-                    图片格式转换、图片编辑、背景移除等更多实用功能正在开发中，敬请期待。
+                    持续优化 AI 绘画功能，计划接入更多高质量模型，提供更丰富的艺术风格和创作选项。同时开发智能修图、风格迁移等新功能。
                   </p>
                 </div>
               </div>
