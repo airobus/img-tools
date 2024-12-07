@@ -110,6 +110,21 @@ export default function ImageDetailPage() {
                                         </p>
                                     </div>
                                 )}
+
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-500 mb-2">创建时间</h3>
+                                    <p className="text-lg text-gray-900 bg-purple-50 rounded-xl p-4">
+                                        {new Date(details.createdAt).toLocaleString('zh-CN', {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                            hour12: false
+                                        })}
+                                    </p>
+                                </div>
                             </div>
 
                             {/* 下载按钮 */}

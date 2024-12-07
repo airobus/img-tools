@@ -78,6 +78,10 @@ export default function AboutPage() {
                   <span className="text-green-500">✓</span>
                   支持批量处理和打包下载
                 </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500">✓</span>
+                  创建时间自动记录和展示
+                </li>
               </ul>
             </section>
 
