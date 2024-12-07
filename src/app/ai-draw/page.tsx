@@ -90,11 +90,11 @@ export default function AiDrawPage() {
       const response = await fetch('https://api.siliconflow.cn/v1/images/generations', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SILICONFLOW_API_TOKEN}`,
+          'Authorization': `Bearer ${process.env.SILICONFLOW_API_TOKEN}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'stabilityai/stable-diffusion-3-5-large',
+          model: 'black-forest-labs/FLUX.1-schnell',
           prompt: enhancedPrompt,
           negative_prompt: negativePrompt,
           image_size: '1024x1024',
