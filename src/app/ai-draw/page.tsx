@@ -87,21 +87,14 @@ export default function AiDrawPage() {
       const enhancedPrompt = await enhancePrompt(prompt)
       
       // 生成图片
-      const response = await fetch('https://api.siliconflow.cn/v1/images/generations', {
+      const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.SILICONFLOW_API_TOKEN}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'black-forest-labs/FLUX.1-schnell',
           prompt: enhancedPrompt,
-          negative_prompt: negativePrompt,
-          image_size: '1024x1024',
-          batch_size: 1,
-          num_inference_steps: 20,
-          guidance_scale: 7.5,
-          prompt_enhancement: false
+          negativePrompt
         })
       })
 
