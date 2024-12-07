@@ -6,6 +6,7 @@ import { collection, query, orderBy, limit, onSnapshot, addDoc, doc, updateDoc, 
 import { db } from '@/lib/firebase'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
+import type { QueryDocumentSnapshot } from 'firebase/firestore'
 
 interface GenerationResult {
     id: string
@@ -47,7 +48,7 @@ export default function AiDrawPage() {
     const [selectedSize, setSelectedSize] = useState<string>('1024x576')
     const [totalCount, setTotalCount] = useState(0)
     const [hasMore, setHasMore] = useState(true)
-    const [lastVisible, setLastVisible] = useState<any>(null)
+    const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot | null>(null)
     
     // 尺寸选项
     const imageSizes: ImageSize[] = [
@@ -103,8 +104,7 @@ export default function AiDrawPage() {
         if (!isClient) return;
 
         const q = query(collection(db, 'imageHistory'));
-        const unsubscribe = onSnapshot(q, async (snapshot) => {
-            // 使用 count() 获取总数
+        const unsubscribe = onSnapshot(q, async () => {
             const countSnapshot = await getCountFromServer(collection(db, 'imageHistory'));
             setTotalCount(countSnapshot.data().count);
         });

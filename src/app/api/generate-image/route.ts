@@ -4,8 +4,6 @@ export async function POST(request: Request) {
   try {
     const { prompt, negativePrompt, imageSize } = await request.json()
     
-    const [width, height] = imageSize.split('x').map(Number)
-    
     const response = await fetch('https://api.siliconflow.cn/v1/images/generations', {
       method: 'POST',
       headers: {
