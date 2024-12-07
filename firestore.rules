@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 允许所有人读取
+    match /generations/{document=**} {
+      allow read: if true;
+      // 允许创建和更新，但要求有必要的字段
+      allow write: if 
+        request.resource.data.keys().hasAll(['prompt', 'imageUrl', 'createdAt']) &&
+        request.resource.data.createdAt is string;
+    }
+  }
+} 

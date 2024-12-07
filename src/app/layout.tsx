@@ -56,16 +56,16 @@ export default function RootLayout({
       description: '调整图片尺寸和比例'
     },
     {
+      name: 'AI绘画',
+      href: '/ai-draw',
+      enabled: true,
+      description: '通过文字描述生成AI艺术作品'
+    },
+    {
       name: 'Logo生成',
       href: '/logo',
       enabled: false,
       description: '快速生成专业的Logo设计'
-    },
-    {
-      name: 'AI生图',
-      href: '/ai-image',
-      enabled: false,
-      description: '使用AI技术生成独特的图像'
     },
   ]
 
