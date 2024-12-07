@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { collection, query, orderBy, limit, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore'
+import { collection, query, orderBy, limit, onSnapshot, addDoc, doc, updateDoc, getCountFromServer, getDocs, startAfter } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
@@ -45,6 +45,9 @@ export default function AiDrawPage() {
     ])
     const [totalProgress, setTotalProgress] = useState(0)
     const [selectedSize, setSelectedSize] = useState<string>('1024x576')
+    const [totalCount, setTotalCount] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
+    const [lastVisible, setLastVisible] = useState<any>(null)
     
     // 尺寸选项
     const imageSizes: ImageSize[] = [
@@ -63,7 +66,7 @@ export default function AiDrawPage() {
 
     // 获取历史记录
     useEffect(() => {
-        if (!isClient) return
+        if (!isClient) return;
 
         const q = query(
             collection(db, 'imageHistory'),
@@ -72,9 +75,10 @@ export default function AiDrawPage() {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const items: GenerationResult[] = snapshot.docs.map(doc => {
+            const items: GenerationResult[] = [];
+            snapshot.forEach((doc) => {
                 const data = doc.data();
-                return {
+                items.push({
                     id: doc.id,
                     prompt: data.originalPrompt,
                     negativePrompt: data.negativePrompt || '',
@@ -83,13 +87,61 @@ export default function AiDrawPage() {
                     status: data.status || 'generating',
                     progress: 100,
                     steps: data.steps || ['优化提示词', '生成图片', '完成']
-                };
+                });
             });
+            
             setResults(items);
+            setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+            setHasMore(snapshot.docs.length === 20);
         });
 
         return () => unsubscribe();
     }, [isClient]);
+
+    // 获取总数
+    useEffect(() => {
+        if (!isClient) return;
+
+        const q = query(collection(db, 'imageHistory'));
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            // 使用 count() 获取总数
+            const countSnapshot = await getCountFromServer(collection(db, 'imageHistory'));
+            setTotalCount(countSnapshot.data().count);
+        });
+
+        return () => unsubscribe();
+    }, [isClient]);
+
+    // 加载更多
+    const loadMore = async () => {
+        if (!lastVisible) return;
+
+        const next = query(
+            collection(db, 'imageHistory'),
+            orderBy('createdAt', 'desc'),
+            startAfter(lastVisible),
+            limit(20)
+        );
+
+        const snapshot = await getDocs(next);
+        const newItems: GenerationResult[] = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                prompt: data.originalPrompt,
+                negativePrompt: data.negativePrompt || '',
+                imageUrl: data.imageUrl || '',
+                createdAt: data.createdAt ? new Date(data.createdAt).getTime() : Date.now(),
+                status: data.status || 'generating',
+                progress: 100,
+                steps: data.steps || ['优化提示词', '生成图片', '完成']
+            };
+        });
+
+        setResults(prev => [...prev, ...newItems]);
+        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+        setHasMore(snapshot.docs.length === 20);
+    };
 
     // 骨架屏
     if (!isClient) {
@@ -147,7 +199,7 @@ export default function AiDrawPage() {
         
         try {
             setIsGenerating(true)
-            setTotalProgress(0)  // 重置总进度
+            setTotalProgress(0)  // 重置进度
             
             // 创建进度更新定时器
             const totalProgressInterval = setInterval(() => {
@@ -318,7 +370,7 @@ export default function AiDrawPage() {
                             </div>
                         </div>
 
-                        {/* 生成进度��骤 */}
+                        {/* 生成进度步骤 */}
                         {isGenerating && (
                             <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-4">
                                 <div 
@@ -433,69 +485,84 @@ export default function AiDrawPage() {
                             创作历史
                         </h2>
                         <span className="text-sm text-gray-500">
-                            {results.length} 张作品
+                            共 {totalCount} 张作品
                         </span>
                     </div>
 
                     {/* 结果展示 */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {results.map((result) => (
-                            <Link 
-                                key={result.id}
-                                href={`/ai-draw/${result.id}`}
-                                className="group relative rounded-2xl overflow-hidden 
-                                    transition-all duration-300 transform hover:scale-[1.02]
-                                    hover:shadow-2xl border border-gray-100
-                                    aspect-square"
-                            >
-                                {result.imageUrl ? (
-                                    <>
-                                        <Image
-                                            src={result.imageUrl}
-                                            alt={result.prompt}
-                                            width={300}
-                                            height={300}
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent 
-                                            opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                            <div className="absolute bottom-0 p-4 text-white">
-                                                <p className="text-sm line-clamp-2 mb-2">{result.prompt}</p>
-                                                <div className="space-y-1">
-                                                    {result.steps?.map((step, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="text-xs flex items-center"
-                                                        >
-                                                            {step.startsWith('✓') ? (
-                                                                <svg className="w-4 h-4 mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                                </svg>
-                                                            ) : (
-                                                                <div className="w-4 h-4 mr-2 rounded-full border border-gray-300"></div>
-                                                            )}
-                                                            <span>{step}</span>
-                                                        </div>
-                                                    ))}
+                            <div key={result.id} className="relative aspect-square">
+                                {/* 图片卡片 */}
+                                <Link 
+                                    href={`/ai-draw/${result.id}`}
+                                    className="block group relative rounded-2xl overflow-hidden 
+                                        transition-all duration-300 transform hover:scale-[1.02]
+                                        hover:shadow-2xl border border-gray-100
+                                        w-full h-full"
+                                >
+                                    {result.imageUrl ? (
+                                        <>
+                                            <Image
+                                                src={result.imageUrl}
+                                                alt={result.prompt}
+                                                width={300}
+                                                height={300}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent 
+                                                opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                <div className="absolute bottom-0 p-4 space-y-4 w-full">
+                                                    <p className="text-sm text-white line-clamp-2">{result.prompt}</p>
                                                 </div>
                                             </div>
+                                        </>
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-100 rounded-2xl 
+                        flex items-center justify-center">
+                                            <div className="text-center space-y-2">
+                                                <svg className="animate-spin h-8 w-8 mx-auto text-gray-400" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                </svg>
+                                                <p className="text-gray-500">创作中...</p>
+                                            </div>
                                         </div>
-                                    </>
-                                ) : (
-                                    <div className="w-full h-full bg-gray-100 rounded-2xl 
-                    flex items-center justify-center">
-                                        <div className="text-center space-y-2">
-                                            <svg className="animate-spin h-8 w-8 mx-auto text-gray-400" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                            <p className="text-gray-500">创作中...</p>
-                                        </div>
-                                    </div>
+                                    )}
+                                </Link>
+
+                                {/* 下载按钮 - 独立于 Link */}
+                                {result.imageUrl && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.open(result.imageUrl, '_blank');
+                                        }}
+                                        className="absolute bottom-4 right-4 z-10
+                                            opacity-0 group-hover:opacity-100
+                                            bg-white/10 backdrop-blur-sm rounded-lg
+                                            px-4 py-2 text-white text-sm font-medium
+                                            hover:bg-white/20 transition-all
+                                            flex items-center gap-2"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        下载
+                                    </button>
                                 )}
-                            </Link>
+                            </div>
                         ))}
                     </div>
+
+                    {hasMore && (
+                        <button 
+                            onClick={loadMore}
+                            className="w-full mt-8 py-4 text-blue-600 hover:text-blue-700"
+                        >
+                            加载更多
+                        </button>
+                    )}
                 </div>
             </div>
 
