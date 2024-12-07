@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Footer from '@/components/Footer'
 import ProgressBar from '@/components/ProgressBar'
+import { collection, query, orderBy, limit, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 interface GenerationResult {
   id: string
@@ -23,22 +25,27 @@ export default function AiDrawPage() {
 
   // 获取历史记录
   useEffect(() => {
-    loadHistory()
-  }, [])
+    const q = query(
+      collection(db, 'imageHistory'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
 
-  const loadHistory = async () => {
-    try {
-      const response = await fetch('/api/storage')
-      if (!response.ok) {
-        throw new Error('Failed to load history')
-      }
-      
-      const historyItems: GenerationResult[] = await response.json()
-      setResults(historyItems)
-    } catch (error) {
-      console.error('加载历史记录失败:', error)
-    }
-  }
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items: GenerationResult[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        prompt: doc.data().originalPrompt,
+        negativePrompt: doc.data().negativePrompt || '',
+        imageUrl: doc.data().imageUrl || '',
+        createdAt: doc.data().createdAt?.toMillis() || Date.now(),
+        status: doc.data().status || 'generating',
+        progress: 100
+      }));
+      setResults(items);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // AI优化提示语
   const enhancePrompt = async (rawPrompt: string) => {
@@ -66,111 +73,47 @@ export default function AiDrawPage() {
 
   // 生成图片
   const generateImage = async () => {
-    if (!prompt) return
+    if (!prompt) return;
     
-    const tempId = Date.now().toString()
-    setIsGenerating(true)
+    // 在外部声明 docRef
+    let docRef;
     
     try {
-      // 添加临时结果
-      setResults(prev => [{
-        id: tempId,
-        prompt,
-        negativePrompt,
-        imageUrl: '',
-        createdAt: Date.now(),
-        status: 'generating',
-        progress: 0
-      }, ...prev])
+      // 1. 先创建一个记录
+      docRef = await addDoc(collection(db, 'imageHistory'), {
+        originalPrompt: prompt,
+        createdAt: new Date(),
+        status: 'generating'
+      });
 
-      // 优化提示词
-      const enhancedPrompt = await enhancePrompt(prompt)
-      
-      // 生成图片
+      // 2. 调用 AI 生成图片
       const response = await fetch('/api/generate-image', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          prompt: enhancedPrompt,
-          negativePrompt
-        })
-      })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-      if (!data.images?.[0]?.url) {
-        throw new Error('Invalid response format')
-      }
-
-      const imageUrl = data.images[0].url
+      const data = await response.json();
       
-      // 上传到Firebase
-      try {
-        const uploadResponse = await fetch('/api/storage/upload', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            imageUrl,
-            metadata: {
-              id: tempId,
-              prompt: enhancedPrompt,
-              negativePrompt,
-              createdAt: Date.now().toString()
-            }
-          })
-        })
+      // 3. 更新记录，添加生成的图片URL
+      await updateDoc(doc(db, 'imageHistory', docRef.id), {
+        imageUrl: data.images[0].url,
+        status: 'completed'
+      });
 
-        if (!uploadResponse.ok) {
-          throw new Error('Upload failed')
-        }
+      // 4. 刷新列表（通过 onSnapshot 自动更新）
 
-        const uploadData = await uploadResponse.json()
-        
-        // 更新结果
-        setResults(prev => prev.map(r => 
-          r.id === tempId ? {
-            ...r,
-            imageUrl: uploadData.imageUrl,
-            status: 'completed',
-            progress: 100
-          } : r
-        ))
-        
-      } catch (error) {
-        console.error('上传到Firebase失败:', error)
-        // 使用原始URL
-        setResults(prev => prev.map(r => 
-          r.id === tempId ? {
-            ...r,
-            imageUrl,
-            status: 'completed',
-            progress: 100
-          } : r
-        ))
-      }
-      
-    } catch (error) {
-      console.error('生成失败:', error)
-      setResults(prev => prev.map(r => 
-        r.id === tempId ? {
-          ...r,
+    } catch (error: unknown) {
+      console.error('生成失败:', error);
+      // 更新状态为失败
+      if (docRef) {
+        await updateDoc(doc(db, 'imageHistory', docRef.id), {
           status: 'failed',
-          error: error instanceof Error ? error.message : '生成失败，请重试',
-          progress: 0
-        } : r
-      ))
-    } finally {
-      setIsGenerating(false)
+          error: error instanceof Error ? error.message : '未知错误'
+        });
+      }
     }
-  }
+  };
 
   return (
     <>
