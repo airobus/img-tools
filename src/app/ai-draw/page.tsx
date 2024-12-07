@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import Footer from '@/components/Footer'
-import ProgressBar from '@/components/ProgressBar'
 import { collection, query, orderBy, limit, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
@@ -79,6 +77,9 @@ export default function AiDrawPage() {
     let docRef;
     
     try {
+      // 设置生成状态
+      setIsGenerating(true)
+      
       // 1. 先创建一个记录
       docRef = await addDoc(collection(db, 'imageHistory'), {
         originalPrompt: prompt,
@@ -86,22 +87,26 @@ export default function AiDrawPage() {
         status: 'generating'
       });
 
-      // 2. 调用 AI 生成图片
+      // 2. 优化提示词
+      const enhancedPrompt = await enhancePrompt(prompt)
+
+      // 3. 调用 AI 生成图片
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ 
+          prompt: enhancedPrompt,
+          negativePrompt 
+        })
       });
 
       const data = await response.json();
       
-      // 3. 更新记录，添加生成的图片URL
+      // 4. 更新记录，添加生成的图片URL
       await updateDoc(doc(db, 'imageHistory', docRef.id), {
         imageUrl: data.images[0].url,
         status: 'completed'
       });
-
-      // 4. 刷新列表（通过 onSnapshot 自动更新）
 
     } catch (error: unknown) {
       console.error('生成失败:', error);
@@ -112,6 +117,9 @@ export default function AiDrawPage() {
           error: error instanceof Error ? error.message : '未知错误'
         });
       }
+    } finally {
+      // 重置生成状态
+      setIsGenerating(false)
     }
   };
 
@@ -127,7 +135,7 @@ export default function AiDrawPage() {
           </div>
 
           <div className="space-y-8">
-            {/* 输入区域 */}
+            {/* 输入域 */}
             <div className="space-y-4">
               <textarea
                 value={prompt}
@@ -152,41 +160,30 @@ export default function AiDrawPage() {
               </button>
             </div>
 
-            {/* 结果展示 */}
-            <div className="grid md:grid-cols-2 gap-8">
-              {results.map(result => (
-                <div key={result.id} className="modern-card p-6 space-y-4">
-                  <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50">
-                    {result.imageUrl ? (
-                      <Image
-                        src={result.imageUrl}
-                        alt={result.prompt}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <ProgressBar progress={result.progress} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <p className="font-medium">提示词</p>
-                    <p className="text-sm text-[var(--text-secondary)]">{result.prompt}</p>
-                    {result.negativePrompt && (
-                      <>
-                        <p className="font-medium">反向提示词</p>
-                        <p className="text-sm text-[var(--text-secondary)]">{result.negativePrompt}</p>
-                      </>
-                    )}
-                  </div>
+            {/* 结果展��� */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {results.map((result) => (
+                <div key={result.id} className="relative">
+                  {result.imageUrl && (
+                    <Image 
+                      src={result.imageUrl} 
+                      alt={result.prompt}
+                      width={300}
+                      height={300}
+                      className="w-full h-auto object-cover rounded-lg"
+                    />
+                  )}
+                  {result.status === 'generating' && (
+                    <div className="w-full h-[300px] bg-gray-100 rounded-lg flex items-center justify-center">
+                      <p className="text-gray-500">生成中...</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         </div>
       </div>
-      <Footer />
     </>
   )
 } 

@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { GenerationResult } from '@/types';
 
 export default function ImageDetailPage() {
@@ -29,7 +30,14 @@ export default function ImageDetailPage() {
   return (
     <div>
       <h1>生成详情</h1>
-      <img src={details.imageUrl} alt={details.prompt} />
+      <Image 
+        src={details.imageUrl} 
+        alt={details.prompt}
+        width={1024}
+        height={1024}
+        layout="responsive"
+        priority
+      />
       <p>提示词: {details.prompt}</p>
       <p>反向提示词: {details.negativePrompt}</p>
     </div>
