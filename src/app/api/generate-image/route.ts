@@ -14,7 +14,7 @@ export async function POST(request: Request) {
         model: 'black-forest-labs/FLUX.1-schnell',
         prompt,
         negative_prompt: negativePrompt,
-        image_size: '1024x1024',
+        image_size: '1024x576',
         batch_size: 1,
         num_inference_steps: 20,
         guidance_scale: 7.5,
