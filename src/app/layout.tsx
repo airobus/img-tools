@@ -38,39 +38,69 @@ export default function RootLayout({
 }) {
   const menuItems = [
     {
+      name: 'AI绘画',
+      href: '/ai-draw',
+      enabled: true,
+      description: '通过文字描述生成AI艺术作品',
+      icon: (
+        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      bgColor: 'bg-purple-50'
+    },
+    {
       name: '图片压缩',
       href: '/compress',
       enabled: true,
-      description: '高效压缩图片，保持最佳质量'
-    }, 
+      description: '高效压缩图片，保持最佳质量',
+      icon: (
+        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7M5 10l7 7 7-7" />
+        </svg>
+      ),
+      bgColor: 'bg-blue-50'
+    },
     {
       name: 'SVG编辑',
       href: '/svg',
       enabled: true,
-      description: '在线编辑SVG代码'
+      description: '在线编辑SVG代码',
+      icon: (
+        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+      ),
+      bgColor: 'bg-green-50'
     },
     {
       name: '图片尺寸',
       href: '/resize',
       enabled: true,
-      description: '调整图片尺寸和比例'
-    },
-    {
-      name: 'AI绘画',
-      href: '/ai-draw',
-      enabled: true,
-      description: '通过文字描述生成AI艺术作品'
+      description: '调整图片尺寸和比例',
+      icon: (
+        <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        </svg>
+      ),
+      bgColor: 'bg-orange-50'
     },
     {
       name: 'Logo生成',
       href: '/logo',
       enabled: false,
-      description: '快速生成专业的Logo设计'
+      description: '快速生成专业的Logo设计',
+      icon: (
+        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      ),
+      bgColor: 'bg-gray-50'
     },
   ]
 
   return (
-    <html lang="zh" className="h-full"> 
+    <html lang="zh" className="h-full">
       <head>
         <link rel="icon" type="public/svg+xml" href="/favicon.svg" />
       </head>
@@ -99,10 +129,8 @@ export default function RootLayout({
                           href={item.href}
                           className="nav-item group"
                         >
-                          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+                          <div className={`w-10 h-10 rounded-xl ${item.bgColor} flex items-center justify-center`}>
+                            {item.icon}
                           </div>
                           <div className="flex-1">
                             <div className="font-medium group-hover:text-[var(--primary)]">
@@ -115,10 +143,8 @@ export default function RootLayout({
                         </Link>
                       ) : (
                         <div className="nav-item opacity-50 cursor-not-allowed">
-                          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
+                          <div className={`w-10 h-10 rounded-xl ${item.bgColor} flex items-center justify-center`}>
+                            {item.icon}
                           </div>
                           <div className="flex-1">
                             <div className="font-medium">{item.name}</div>

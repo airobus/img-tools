@@ -1,3 +1,4 @@
+import React from 'react'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 
@@ -19,54 +20,80 @@ export default function Home() {
 
             {/* 工具卡片 */}
             <div className="grid md:grid-cols-2 gap-8">
-              <Link 
-                href="/compress" 
-                className="modern-card group p-8 hover:-translate-y-1"
-              >
-                <div className="flex items-start space-x-6">
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+              {[
+                {
+                  title: '图片压缩',
+                  description: '智能压缩算法，在保持图片质量的同时大幅减小文件体积',
+                  href: '/compress',
+                  icon: (
                     <svg className="w-6 h-6 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7M5 10l7 7 7-7" />
                     </svg>
-                  </div>
-                  <div className="flex-1 space-y-3">
-                    <h3 className="text-xl font-semibold group-hover:text-[var(--primary)] transition-colors">
-                      图片压缩
-                    </h3>
-                    <p className="text-[var(--text-secondary)] leading-relaxed">
-                      智能压缩算法，在保持图片质量的同时大幅减小文件体积
-                    </p>
-                    <div className="flex items-center text-[var(--primary)] font-medium">
-                      立即使用
-                      <svg className="w-5 h-5 ml-2 transform transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-
-              <Link 
-                href="/ai-draw" 
-                className="modern-card group p-8 hover:-translate-y-1"
-              >
-                <div className="flex items-start space-x-6">
-                  <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
+                  ),
+                  bgColor: 'bg-blue-50'
+                },
+                {
+                  title: 'AI绘画',
+                  description: '通过文字描述生成独特的AI艺术作品',
+                  href: '/ai-draw',
+                  icon: (
                     <svg className="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
+                  ),
+                  bgColor: 'bg-purple-50'
+                },
+                {
+                  title: 'SVG编辑',
+                  description: '在线编辑和预览SVG代码，支持实时预览和格式化',
+                  href: '/svg',
+                  icon: (
+                    <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  ),
+                  bgColor: 'bg-green-50'
+                },
+                {
+                  title: '图片尺寸',
+                  description: '轻松调整图片大小，支持保持宽高比和旋转',
+                  href: '/resize',
+                  icon: (
+                    <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  ),
+                  bgColor: 'bg-orange-50'
+                }
+              ].map((tool) => (
+                <Link 
+                  key={tool.href}
+                  href={tool.href} 
+                  className="modern-card group p-8 hover:-translate-y-1"
+                >
+                  <div className="flex items-start space-x-6">
+                    <div className={`w-12 h-12 rounded-xl ${tool.bgColor} flex items-center justify-center`}>
+                      {tool.icon}
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <h3 className="text-xl font-semibold group-hover:text-[var(--primary)] transition-colors">
+                        {tool.title}
+                      </h3>
+                      <p className="text-[var(--text-secondary)] leading-relaxed">
+                        {tool.description}
+                      </p>
+                      <div className="flex items-center text-[var(--primary)] font-medium">
+                        立即使用
+                        <svg className="w-5 h-5 ml-2 transform transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1 space-y-3">
-                    <h2 className="text-xl font-medium group-hover:text-[var(--primary)] transition-colors">
-                      AI绘画
-                    </h2>
-                    <p className="text-[var(--text-secondary)]">
-                      通过文字描述生成独特的AI艺术作品
-                    </p>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              ))}
 
+              {/* 即将推出卡片 */}
               <div className="modern-card p-8 opacity-75">
                 <div className="flex items-start space-x-6">
                   <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center">
