@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const { prompt, negativePrompt } = await request.json()
+    const { prompt, negativePrompt, imageSize } = await request.json()
+    
+    const [width, height] = imageSize.split('x').map(Number)
     
     const response = await fetch('https://api.siliconflow.cn/v1/images/generations', {
       method: 'POST',
@@ -14,7 +16,7 @@ export async function POST(request: Request) {
         model: 'black-forest-labs/FLUX.1-schnell',
         prompt,
         negative_prompt: negativePrompt,
-        image_size: '1024x576',
+        image_size: imageSize,
         batch_size: 1,
         num_inference_steps: 20,
         guidance_scale: 7.5,

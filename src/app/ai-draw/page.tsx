@@ -25,6 +25,12 @@ interface GenerationStep {
     progress: number
 }
 
+// 添加尺寸选项类型
+interface ImageSize {
+    label: string;
+    value: string;
+}
+
 export default function AiDrawPage() {
     const [isClient, setIsClient] = useState(false)
     const [prompt, setPrompt] = useState('')
@@ -38,6 +44,17 @@ export default function AiDrawPage() {
         { name: '完成', completed: false, progress: 0 }
     ])
     const [totalProgress, setTotalProgress] = useState(0)
+    const [selectedSize, setSelectedSize] = useState<string>('1024x576')
+    
+    // 尺寸选项
+    const imageSizes: ImageSize[] = [
+        { label: '方形', value: '1024x1024' },
+        { label: '横幅', value: '1024x576' },
+        { label: '竖幅', value: '576x1024' },
+        { label: '宽幅', value: '768x512' },
+        { label: '长幅', value: '512x1024' },
+        { label: '高幅', value: '768x1024' },
+    ]
 
     // 确保只在客户端渲染
     useEffect(() => {
@@ -191,7 +208,8 @@ export default function AiDrawPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     prompt: enhancedPrompt,
-                    negativePrompt
+                    negativePrompt,
+                    imageSize: selectedSize
                 })
             });
 
@@ -300,7 +318,7 @@ export default function AiDrawPage() {
                             </div>
                         </div>
 
-                        {/* 生成进度步骤 */}
+                        {/* 生成进度��骤 */}
                         {isGenerating && (
                             <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-4">
                                 <div 
@@ -345,37 +363,68 @@ export default function AiDrawPage() {
                             </div>
                         )}
 
-                        {/* 创作按钮 */}
-                        <button
-                            onClick={generateImage}
-                            disabled={isGenerating || !prompt}
-                            className="w-full py-4 px-6 rounded-2xl 
-                bg-gradient-to-r from-blue-600 to-blue-700
-                hover:from-blue-700 hover:to-blue-800
-                text-white font-medium text-lg
-                transition-all duration-300 transform
-                hover:scale-[1.02] active:scale-[0.98]
-                disabled:opacity-50 disabled:cursor-not-allowed
-                disabled:hover:scale-100
-                shadow-xl hover:shadow-2xl
-                flex items-center justify-center space-x-3
-                group"
-                        >
-                            {isGenerating ? (
-                                <>
-                                    <svg
-                                        className="animate-spin h-6 w-6 text-white group-hover:rotate-180 transition-transform"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        {/* 按钮组 */}
+                        <div className="flex gap-4">
+                            {/* 尺寸选择下拉菜单 */}
+                            <div className="relative w-48">
+                                <select
+                                    value={selectedSize}
+                                    onChange={(e) => setSelectedSize(e.target.value)}
+                                    disabled={isGenerating}
+                                    className="w-full py-4 px-6 rounded-2xl 
+                                        bg-white border-2 border-gray-200
+                                        text-gray-700 font-medium
+                                        transition-all duration-200
+                                        hover:border-gray-300 focus:border-blue-400
+                                        focus:ring-2 focus:ring-blue-100
+                                        disabled:opacity-50 disabled:cursor-not-allowed
+                                        appearance-none cursor-pointer"
+                                >
+                                    {imageSizes.map((size) => (
+                                        <option key={size.value} value={size.value}>
+                                            {size.label} ({size.value})
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                     </svg>
-                                    <span className="tracking-wider">正在创作...</span>
-                                </>
-                            ) : (
-                                <span className="tracking-wider">开始创作</span>
-                            )}
-                        </button>
+                                </div>
+                            </div>
+
+                            {/* 创作按钮 */}
+                            <button
+                                onClick={generateImage}
+                                disabled={isGenerating || !prompt}
+                                className="flex-1 py-4 px-6 rounded-2xl 
+                                    bg-gradient-to-r from-blue-600 to-blue-700
+                                    hover:from-blue-700 hover:to-blue-800
+                                    text-white font-medium text-lg
+                                    transition-all duration-300 transform
+                                    hover:scale-[1.02] active:scale-[0.98]
+                                    disabled:opacity-50 disabled:cursor-not-allowed
+                                    disabled:hover:scale-100
+                                    shadow-xl hover:shadow-2xl
+                                    flex items-center justify-center space-x-3
+                                    group"
+                            >
+                                {isGenerating ? (
+                                    <>
+                                        <svg
+                                            className="animate-spin h-6 w-6 text-white group-hover:rotate-180 transition-transform"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        <span className="tracking-wider">正在创作...</span>
+                                    </>
+                                ) : (
+                                    <span className="tracking-wider">开始创作</span>
+                                )}
+                            </button>
+                        </div>
                     </div>
 
                     {/* 生成历史标题 */}
