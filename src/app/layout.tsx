@@ -105,6 +105,11 @@ export default function RootLayout({
     <html lang="zh" className="h-full">
       <head>
         <link rel="icon" type="public/svg+xml" href="/favicon.svg" />
+        <script 
+          defer 
+          src="https://cloud.umami.is/script.js" 
+          data-website-id="27ccf850-f6b7-4cc7-abf1-ee5fc0494756"
+        />
       </head>
       <body className={`${inter.className} h-full`}>
         <div className="min-w-[1024px]">
