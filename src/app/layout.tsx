@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Link from 'next/link'
 import { Analytics } from '@vercel/analytics/react'
+import Sidebar from '@/components/Sidebar'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -108,64 +109,7 @@ export default function RootLayout({
       <body className={`${inter.className} h-full`}>
         <div className="min-w-[1024px]">
           <div className="flex h-full">
-            {/* 侧边栏导航 */}
-            <aside className="fixed left-0 top-0 h-full w-64 glass-effect border-r border-[var(--border)] z-10">
-              {/* Logo */}
-              <div className="h-16 flex items-center px-6 border-b border-[var(--border)]">
-                <Link
-                  href="/"
-                  className="text-xl font-semibold gradient-text hover:opacity-80 transition-opacity"
-                >
-                  图片魔方
-                </Link>
-              </div>
-
-              {/* 导航菜单 */}
-              <nav className="p-4">
-                <div className="space-y-2">
-                  {menuItems.map((item) => (
-                    <div key={item.href}>
-                      {item.enabled ? (
-                        <Link
-                          href={item.href}
-                          className="nav-item group"
-                        >
-                          <div className={`w-10 h-10 rounded-xl ${item.bgColor} flex items-center justify-center`}>
-                            {item.icon}
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium group-hover:text-[var(--primary)]">
-                              {item.name}
-                            </div>
-                            <div className="text-sm text-[var(--text-secondary)]">
-                              {item.description}
-                            </div>
-                          </div>
-                        </Link>
-                      ) : (
-                        <div className="nav-item opacity-50 cursor-not-allowed">
-                          <div className={`w-10 h-10 rounded-xl ${item.bgColor} flex items-center justify-center`}>
-                            {item.icon}
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium">{item.name}</div>
-                            <div className="text-sm text-[var(--text-secondary)] mt-1">
-                              即将推出
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </nav>
-
-              {/* 底部版权信息 */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 text-center text-sm text-[var(--text-secondary)] border-t border-[var(--border)]">
-                © 2024 图片魔方
-              </div>
-            </aside>
-
+            <Sidebar menuItems={menuItems} />
             {/* 主内容区域 */}
             <main className="flex-1 ml-64 min-h-screen bg-[var(--background)] relative">
               {/* 修改右上角导航的 z-index */}
