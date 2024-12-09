@@ -88,6 +88,23 @@ export default function RootLayout({
       bgColor: 'bg-orange-50'
     },
     {
+      name: 'Favicon获取',
+      href: '/favicon',
+      enabled: true,
+      description: '轻松获取网站图标',
+      icon: (
+        <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+      bgColor: 'bg-teal-50'
+    },
+    {
       name: 'Logo生成',
       href: '/logo',
       enabled: false,
@@ -105,9 +122,9 @@ export default function RootLayout({
     <html lang="zh" className="h-full">
       <head>
         <link rel="icon" type="public/svg+xml" href="/favicon.svg" />
-        <script 
-          defer 
-          src="https://cloud.umami.is/script.js" 
+        <script
+          defer
+          src="https://cloud.umami.is/script.js"
           data-website-id="27ccf850-f6b7-4cc7-abf1-ee5fc0494756"
         />
       </head>
