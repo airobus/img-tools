@@ -105,6 +105,23 @@ export default function RootLayout({
       bgColor: 'bg-teal-50'
     },
     {
+      name: '文字卡片',
+      href: '/text-card',
+      enabled: true,
+      description: '生成精美的文字卡片',
+      icon: (
+        <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth="2" 
+            d="M4 6h16M4 12h16m-7 6h7" 
+          />
+        </svg>
+      ),
+      bgColor: 'bg-indigo-50'
+    },
+    {
       name: 'Logo生成',
       href: '/logo',
       enabled: false,
@@ -127,6 +144,8 @@ export default function RootLayout({
           src="https://cloud.umami.is/script.js"
           data-website-id="27ccf850-f6b7-4cc7-abf1-ee5fc0494756"
         />
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;500;700&family=Inter:wght@400;500;700&family=Roboto+Mono&family=JetBrains+Mono&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
       </head>
       <body className={`${inter.className} h-full`}>
         <div className="min-w-[1024px]">
