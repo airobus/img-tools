@@ -78,25 +78,66 @@ export default function MarkdownConverterPage() {
 
   // 分割文本为多个卡片
   const splitIntoCards = (text: string): string[] => {
-    const maxChars = 500 // 每张卡片的最大字符数
+    // 如果是自适应尺寸，使用简单的字符数限制
+    if (selectedSize.width === 'auto') {
+      const maxChars = 500
+      const cards: string[] = []
+      let currentCard = ''
+      
+      const lines = text.split('\n')
+      for (const line of lines) {
+        if (currentCard.length + line.length > maxChars) {
+          cards.push(currentCard.trim())
+          currentCard = line
+        } else {
+          currentCard += (currentCard ? '\n' : '') + line
+        }
+      }
+      if (currentCard) {
+        cards.push(currentCard.trim())
+      }
+      return cards
+    }
+
+    // 计算每张卡片的可用高度（像素）
+    const availableHeight = Number(selectedSize.height) / 2 - (padding * 2) - 60 // 减去padding和导出按钮的高度
+
+    // 创建一个临时的测量容器
+    const measureContainer = document.createElement('div')
+    measureContainer.style.width = `${Number(selectedSize.width) / 2 - padding * 2}px`
+    measureContainer.style.fontSize = `${fontSize}px`
+    measureContainer.style.visibility = 'hidden'
+    measureContainer.style.position = 'absolute'
+    measureContainer.style.left = '-9999px'
+    document.body.appendChild(measureContainer)
+
     const cards: string[] = []
     let currentCard = ''
-    
     const lines = text.split('\n')
-    
+
     for (const line of lines) {
-      if (currentCard.length + line.length > maxChars) {
+      // 临时添加新行测量高度
+      const testContent = currentCard + (currentCard ? '\n' : '') + line
+      measureContainer.innerHTML = `<div class="markdown-content prose prose-sm">${testContent}</div>`
+      
+      if (measureContainer.offsetHeight > availableHeight && currentCard) {
+        // 如果超出高度且当前卡片不为空，保存当前卡片
         cards.push(currentCard.trim())
         currentCard = line
       } else {
-        currentCard += (currentCard ? '\n' : '') + line
+        // 如果没超出高度，或者当前卡片为空（即使超出也要放入至少一行），添加内容
+        currentCard = testContent
       }
     }
-    
+
+    // 添加最后一张卡片
     if (currentCard) {
       cards.push(currentCard.trim())
     }
-    
+
+    // 清理测量容器
+    document.body.removeChild(measureContainer)
+
     return cards
   }
 
@@ -125,8 +166,41 @@ export default function MarkdownConverterPage() {
 
       // 设置导出尺寸为原始尺寸
       if (selectedSize.width !== 'auto') {
-        clonedCard.style.width = `${selectedSize.width}px`
-        clonedCard.style.height = `${selectedSize.height}px`
+        const targetWidth = Number(selectedSize.width)
+        const targetHeight = Number(selectedSize.height)
+        const previewWidth = targetWidth / 2  // 预览时的宽度
+
+        // 计算缩放比例
+        const scale = targetWidth / previewWidth
+
+        // 设置主容器尺寸为目标尺寸
+        clonedCard.style.width = `${targetWidth}px`
+        clonedCard.style.height = `${targetHeight}px`
+        
+        // 调整字体大小和内边距
+        const contentContainer = clonedCard.querySelector('.markdown-content') as HTMLElement
+        if (contentContainer) {
+          contentContainer.style.fontSize = `${fontSize * scale}px`
+          // 设置 Markdown 样式
+          contentContainer.style.lineHeight = '1.6'
+          // 设置标题样式
+          const headings = contentContainer.querySelectorAll('h1, h2, h3, h4, h5, h6')
+          headings.forEach(heading => {
+            ;(heading as HTMLElement).style.fontWeight = 'bold'
+            ;(heading as HTMLElement).style.marginBottom = '0.5em'
+          })
+          // 设置段落样式
+          const paragraphs = contentContainer.querySelectorAll('p')
+          paragraphs.forEach(p => {
+            ;(p as HTMLElement).style.marginBottom = '1em'
+          })
+        }
+
+        // 调整内边距
+        const paddingContainer = clonedCard.querySelector('.flex-1') as HTMLElement
+        if (paddingContainer) {
+          paddingContainer.style.padding = `${padding * scale}px`
+        }
       }
 
       const canvas = await html2canvas(clonedCard, {
@@ -162,7 +236,7 @@ export default function MarkdownConverterPage() {
           <div className="space-y-4">
             <h1 className="text-4xl font-medium tracking-tight">Markdown 转换工具</h1>
             <p className="text-[var(--text-secondary)] text-xl">
-              将 Markdown 文本转换为小红书友好的富文本格式
+            将 Markdown 文本渲染为卡片
             </p>
           </div>
 
@@ -310,8 +384,127 @@ export default function MarkdownConverterPage() {
                           className="flex-1 overflow-y-auto"
                           style={{ padding: `${padding}px` }}
                         >
-                          <div style={{ fontSize: `${fontSize}px` }}>
-                            <ReactMarkdown>{cardContent}</ReactMarkdown>
+                          <div 
+                            className="markdown-content prose prose-sm" 
+                            style={{ 
+                              fontSize: `${fontSize}px`,
+                              // 确保内容不会超出容器
+                              width: '100%',
+                              maxWidth: '100%',
+                              wordWrap: 'break-word',
+                              overflowWrap: 'break-word'
+                            }}
+                          >
+                            <ReactMarkdown
+                              components={{
+                                // 自定义 Markdown 组件样式
+                                h1: ({ node, ...props }) => (
+                                  <h1 
+                                    style={{ 
+                                      fontSize: '1.5em', 
+                                      fontWeight: 'bold',
+                                      overflowWrap: 'break-word',
+                                      wordWrap: 'break-word',
+                                      maxWidth: '100%'
+                                    }} 
+                                    {...props} 
+                                  />
+                                ),
+                                h2: ({ node, ...props }) => (
+                                  <h2 
+                                    style={{ 
+                                      fontSize: '1.3em', 
+                                      fontWeight: 'bold',
+                                      overflowWrap: 'break-word',
+                                      wordWrap: 'break-word',
+                                      maxWidth: '100%'
+                                    }} 
+                                    {...props} 
+                                  />
+                                ),
+                                h3: ({ node, ...props }) => (
+                                  <h3 
+                                    style={{ 
+                                      fontSize: '1.1em', 
+                                      fontWeight: 'bold',
+                                      overflowWrap: 'break-word',
+                                      wordWrap: 'break-word',
+                                      maxWidth: '100%'
+                                    }} 
+                                    {...props} 
+                                  />
+                                ),
+                                p: ({ node, ...props }) => (
+                                  <p 
+                                    style={{ 
+                                      marginBottom: '1em',
+                                      overflowWrap: 'break-word',
+                                      wordWrap: 'break-word',
+                                      maxWidth: '100%'
+                                    }} 
+                                    {...props} 
+                                  />
+                                ),
+                                ul: ({ node, ...props }) => (
+                                  <ul 
+                                    style={{ 
+                                      paddingLeft: '1.5em', 
+                                      marginBottom: '1em',
+                                      maxWidth: '100%'
+                                    }} 
+                                    {...props} 
+                                  />
+                                ),
+                                ol: ({ node, ...props }) => (
+                                  <ol 
+                                    style={{ 
+                                      paddingLeft: '1.5em', 
+                                      marginBottom: '1em',
+                                      maxWidth: '100%'
+                                    }} 
+                                    {...props} 
+                                  />
+                                ),
+                                li: ({ node, ...props }) => (
+                                  <li 
+                                    style={{ 
+                                      marginBottom: '0.5em',
+                                      overflowWrap: 'break-word',
+                                      wordWrap: 'break-word',
+                                      maxWidth: '100%'
+                                    }} 
+                                    {...props} 
+                                  />
+                                ),
+                                blockquote: ({ node, ...props }) => (
+                                  <blockquote 
+                                    style={{ 
+                                      borderLeft: '4px solid currentColor',
+                                      paddingLeft: '1em',
+                                      marginLeft: 0,
+                                      marginBottom: '1em',
+                                      opacity: 0.8,
+                                      overflowWrap: 'break-word',
+                                      wordWrap: 'break-word',
+                                      maxWidth: '100%'
+                                    }} 
+                                    {...props} 
+                                  />
+                                ),
+                                // 添加图片控制
+                                img: ({ node, ...props }) => (
+                                  <img 
+                                    style={{ 
+                                      maxWidth: '100%',
+                                      height: 'auto'
+                                    }} 
+                                    {...props} 
+                                  />
+                                ),
+                              }}
+                            >
+                              {cardContent}
+                            </ReactMarkdown>
                           </div>
                         </div>
                         <div className="p-4 border-t border-[var(--border)] bg-white/50 export-button-container">
