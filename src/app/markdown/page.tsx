@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import html2canvas from 'html2canvas'
 import Footer from '@/components/Footer'
@@ -70,14 +70,14 @@ const cardSizes = [
 export default function MarkdownConverterPage() {
   const [markdown, setMarkdown] = useState('')
   const [fontSize, setFontSize] = useState(16)
-  const [maxHeight, setMaxHeight] = useState(800) // 单个卡片最大高度
-  const previewRef = useRef<HTMLDivElement>(null)
   const [selectedStyle, setSelectedStyle] = useState(cardStyles[2])
   const [selectedSize, setSelectedSize] = useState(cardSizes[2])
   const [padding, setPadding] = useState(32) // 默认 32px 内边距
 
-  // 分割文本为多个卡片
+  // 修改分割文本为多个卡片的逻辑
   const splitIntoCards = (text: string): string[] => {
+    if (!text.trim()) return [''];
+
     // 如果是自适应尺寸，使用简单的字符数限制
     if (selectedSize.width === 'auto') {
       const maxChars = 500
@@ -99,46 +99,78 @@ export default function MarkdownConverterPage() {
       return cards
     }
 
-    // 计算每张卡片的可用高度（像素）
-    const availableHeight = Number(selectedSize.height) / 2 - (padding * 2) - 60 // 减去padding和导出按钮的高度
+    // 对于固定尺寸卡片，使用更精确的分割方法
+    try {
+      // 计算每张卡片的可用高度（像素）
+      const availableHeight = Number(selectedSize.height) / 2 - (padding * 2) - 60 // 减去padding和导出按钮的高度
 
-    // 创建一个临时的测量容器
-    const measureContainer = document.createElement('div')
-    measureContainer.style.width = `${Number(selectedSize.width) / 2 - padding * 2}px`
-    measureContainer.style.fontSize = `${fontSize}px`
-    measureContainer.style.visibility = 'hidden'
-    measureContainer.style.position = 'absolute'
-    measureContainer.style.left = '-9999px'
-    document.body.appendChild(measureContainer)
+      // 创建一个临时的测量容器
+      const measureContainer = document.createElement('div')
+      measureContainer.style.width = `${Number(selectedSize.width) / 2 - padding * 2}px`
+      measureContainer.style.fontSize = `${fontSize}px`
+      measureContainer.style.visibility = 'hidden'
+      measureContainer.style.position = 'absolute'
+      measureContainer.style.left = '-9999px'
+      measureContainer.classList.add('prose', 'prose-sm')
+      document.body.appendChild(measureContainer)
 
-    const cards: string[] = []
-    let currentCard = ''
-    const lines = text.split('\n')
+      const cards: string[] = []
+      let currentCard = ''
+      const paragraphs = text.split('\n\n'); // 按段落分割
 
-    for (const line of lines) {
-      // 临时添加新行测量高度
-      const testContent = currentCard + (currentCard ? '\n' : '') + line
-      measureContainer.innerHTML = `<div class="markdown-content prose prose-sm">${testContent}</div>`
-      
-      if (measureContainer.offsetHeight > availableHeight && currentCard) {
-        // 如果超出高度且当前卡片不为空，保存当前卡片
-        cards.push(currentCard.trim())
-        currentCard = line
-      } else {
-        // 如果没超出高度，或者当前卡片为空（即使超出也要放入至少一行），添加内容
-        currentCard = testContent
+      for (const paragraph of paragraphs) {
+        if (!paragraph.trim()) continue;
+        
+        // 尝试添加整个段落
+        const testContent = currentCard ? `${currentCard}\n\n${paragraph}` : paragraph;
+        measureContainer.innerHTML = `<div>${testContent}</div>`;
+        
+        if (measureContainer.offsetHeight > availableHeight && currentCard) {
+          // 如果添加整个段落后超出高度，保存当前卡片，新段落放入新卡片
+          cards.push(currentCard);
+          currentCard = paragraph;
+        } else if (measureContainer.offsetHeight > availableHeight) {
+          // 如果当前卡片为空但段落本身就超高度，需要按行分割
+          const lines = paragraph.split('\n');
+          let tempPara = '';
+          
+          for (const line of lines) {
+            const testLine = tempPara ? `${tempPara}\n${line}` : line;
+            measureContainer.innerHTML = `<div>${testLine}</div>`;
+            
+            if (measureContainer.offsetHeight > availableHeight && tempPara) {
+              // 如果添加新行后超出高度，保存当前内容
+              cards.push(tempPara);
+              tempPara = line;
+            } else {
+              tempPara = testLine;
+            }
+          }
+          
+          if (tempPara) {
+            currentCard = tempPara;
+          }
+        } else {
+          // 未超出高度，添加整个段落
+          currentCard = testContent;
+        }
       }
+
+      // 添加最后一张卡片
+      if (currentCard) {
+        cards.push(currentCard);
+      }
+
+      // 清理测量容器
+      document.body.removeChild(measureContainer);
+
+      return cards.length > 0 ? cards : [''];
+    } catch (error) {
+      console.error('分割卡片错误:', error);
+      // 出错时回退到简单分割方法
+      const fallbackCards = text.split('\n\n').filter(p => p.trim());
+      return fallbackCards.length > 0 ? fallbackCards : [''];
     }
-
-    // 添加最后一张卡片
-    if (currentCard) {
-      cards.push(currentCard.trim())
-    }
-
-    // 清理测量容器
-    document.body.removeChild(measureContainer)
-
-    return cards
   }
 
   // 导出为图片
@@ -397,8 +429,8 @@ export default function MarkdownConverterPage() {
                           >
                             <ReactMarkdown
                               components={{
-                                // 自定义 Markdown 组件样式
-                                h1: ({ node, ...props }) => (
+                                // 修复未使用的 node 参数问题
+                                h1: ({...props}) => (
                                   <h1 
                                     style={{ 
                                       fontSize: '1.5em', 
@@ -410,7 +442,7 @@ export default function MarkdownConverterPage() {
                                     {...props} 
                                   />
                                 ),
-                                h2: ({ node, ...props }) => (
+                                h2: ({...props}) => (
                                   <h2 
                                     style={{ 
                                       fontSize: '1.3em', 
@@ -422,7 +454,7 @@ export default function MarkdownConverterPage() {
                                     {...props} 
                                   />
                                 ),
-                                h3: ({ node, ...props }) => (
+                                h3: ({...props}) => (
                                   <h3 
                                     style={{ 
                                       fontSize: '1.1em', 
@@ -434,7 +466,7 @@ export default function MarkdownConverterPage() {
                                     {...props} 
                                   />
                                 ),
-                                p: ({ node, ...props }) => (
+                                p: ({...props}) => (
                                   <p 
                                     style={{ 
                                       marginBottom: '1em',
@@ -445,7 +477,7 @@ export default function MarkdownConverterPage() {
                                     {...props} 
                                   />
                                 ),
-                                ul: ({ node, ...props }) => (
+                                ul: ({...props}) => (
                                   <ul 
                                     style={{ 
                                       paddingLeft: '1.5em', 
@@ -455,7 +487,7 @@ export default function MarkdownConverterPage() {
                                     {...props} 
                                   />
                                 ),
-                                ol: ({ node, ...props }) => (
+                                ol: ({...props}) => (
                                   <ol 
                                     style={{ 
                                       paddingLeft: '1.5em', 
@@ -465,7 +497,7 @@ export default function MarkdownConverterPage() {
                                     {...props} 
                                   />
                                 ),
-                                li: ({ node, ...props }) => (
+                                li: ({...props}) => (
                                   <li 
                                     style={{ 
                                       marginBottom: '0.5em',
@@ -476,7 +508,7 @@ export default function MarkdownConverterPage() {
                                     {...props} 
                                   />
                                 ),
-                                blockquote: ({ node, ...props }) => (
+                                blockquote: ({...props}) => (
                                   <blockquote 
                                     style={{ 
                                       borderLeft: '4px solid currentColor',
@@ -491,14 +523,15 @@ export default function MarkdownConverterPage() {
                                     {...props} 
                                   />
                                 ),
-                                // 添加图片控制
-                                img: ({ node, ...props }) => (
+                                // 修改 img 组件的处理方式
+                                img: ({src, alt}) => (
                                   <img 
+                                    src={src || ''}
+                                    alt={alt || "图片"}
                                     style={{ 
                                       maxWidth: '100%',
                                       height: 'auto'
-                                    }} 
-                                    {...props} 
+                                    }}
                                   />
                                 ),
                               }}
