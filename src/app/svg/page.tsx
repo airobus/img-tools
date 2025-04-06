@@ -168,32 +168,65 @@ export default function SvgEditorPage() {
           <div className="grid grid-cols-2 gap-8">
             {/* 代码编辑区 */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-medium">SVG代码</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={formatSvgCode}
-                    disabled={!svgCode}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    格式化
-                  </button>
-                  <button
-                    onClick={handleCopy}
-                    disabled={!svgCode}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    复制代码
-                  </button>
-                  <button
-                    onClick={handleClear}
-                    disabled={!svgCode}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    清除
-                  </button>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-medium">SVG代码</h2>
+                </div>
+                
+                {/* 按钮分成两行 */}
+                <div className="flex flex-wrap gap-2">
+                  {/* 第一行按钮 - 编辑操作 */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={formatSvgCode}
+                      disabled={!svgCode}
+                      className="px-3 py-1.5 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      格式化
+                    </button>
+                    <button
+                      onClick={handleCopy}
+                      disabled={!svgCode}
+                      className="px-3 py-1.5 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      复制代码
+                    </button>
+                    <button
+                      onClick={handleClear}
+                      disabled={!svgCode}
+                      className="px-3 py-1.5 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      清除
+                    </button>
+                  </div>
+                  
+                  {/* 第二行按钮 - 导出操作 */}
+                  <div className="flex gap-2 ml-auto">
+                    <button
+                      onClick={() => handleDownload('svg')}
+                      disabled={!svgCode || !!error}
+                      className="px-3 py-1.5 text-sm rounded-lg bg-blue-100 hover:bg-blue-200 active:bg-blue-300 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      下载SVG
+                    </button>
+                    <button
+                      onClick={() => handleDownload('png')}
+                      disabled={!svgCode || !!error}
+                      className="px-3 py-1.5 text-sm rounded-lg bg-blue-100 hover:bg-blue-200 active:bg-blue-300 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      下载PNG
+                    </button>
+                    <button
+                      onClick={() => handleDownload('jpg')}
+                      disabled={!svgCode || !!error}
+                      className="px-3 py-1.5 text-sm rounded-lg bg-blue-100 hover:bg-blue-200 active:bg-blue-300 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      下载JPG
+                    </button>
+                  </div>
                 </div>
               </div>
+              
               <textarea
                 value={svgCode}
                 onChange={handleCodeChange}
@@ -209,29 +242,6 @@ export default function SvgEditorPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-medium">预览</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleDownload('svg')}
-                    disabled={!svgCode || !!error}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
-                  >
-                    下载SVG
-                  </button>
-                  <button
-                    onClick={() => handleDownload('png')}
-                    disabled={!svgCode || !!error}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
-                  >
-                    下载PNG
-                  </button>
-                  <button
-                    onClick={() => handleDownload('jpg')}
-                    disabled={!svgCode || !!error}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
-                  >
-                    下载JPG
-                  </button>
-                </div>
               </div>
               <div 
                 ref={previewRef}
